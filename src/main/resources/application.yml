@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: autoInvest
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/autoInvest
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+
+  sql:
+    init:
+      mode: embedded
+      platform: mysql
+
+
+
+  profiles:
+    active: redis
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      repositories:
+        enabled: false
+
+logging:
+  level:
+    io.r2dbc.spi: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+    dev.miku.r2dbc.mysql: DEBUG
+    org.springframework.data.r2dbc.core: DEBUG
+
+    com.jypLord.domain: DEBUG
+    com.jypLord.api: DEBUG
+#    org.springframework.web.reactive.socket: debug
+#    org.springframework.web.reactive.socket.client: debug
+#    org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient: debug
+
+#    reactor.netty: DEBUG
+#    reactor.netty.http.client: DEBUG
+#    reactor.netty.transport: TRACE
+
+    reactor.netty.http.client.HttpClient: DEBUG
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+
