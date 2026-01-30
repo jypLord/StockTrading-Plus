@@ -34,16 +34,16 @@ DB: MySQL (AWS RDS)
 
 Cache / Messaging: Redis
 
-Pub/Sub: 실시간 가격 브로드캐스팅
+Redis Pub/Sub: 공통 데이터 브로드캐스팅
 
-Streams: 작업 큐 (Consumer Group)
+Redis Streams: 작업 큐
 
 Infra: AWS EC2 micro, RDS
 
 
 ## 4) 트러블 슈팅
 ### 4-1. 너무 많은 세션과 중복 데이터
-문제
+**문제**
 
 기존 구조: EC2 단일 노드(앱 + Redis + MySQL)
 
@@ -51,14 +51,14 @@ Infra: AWS EC2 micro, RDS
 
 또한 다수 사용자가 동일 종목을 동시에 감시 → 동일한 시세 데이터를 여러 세션이 중복 수신
 
-해결
+**해결**
 
 Redis 서버를 분리하고 전역 Pub/Sub 브로드캐스팅으로 “시세 수신을 1회화”
 
 App 서버는 **종목당 1개**의 수신 파이프라인만 유지하고, 내부/다른 서버로는 Redis로 전파
 
 ### 4-2. 순수 메모리 부족
-문제
+**문제**
 
 기존 상태: MySQL + JVM 기본 옵션 + 단일 EC2
 
@@ -66,7 +66,7 @@ micro 인스턴스에서 DB + App이 같이 돌고 있기 때문에 MySQL InnoDB
 
 결국 system.mem.available 급락하여 스왑/GC 폭증으로 이어짐
 
-해결
+**해결**
 
 1. DB를 RDS로 분리: App 서버에서 MySQL 메모리 풋프린트를 제거
 
