@@ -62,23 +62,19 @@ App 서버는 **종목당 1개**의 수신 파이프라인만 유지하고, 내�
 
 기존 상태: MySQL + JVM 기본 옵션 + 단일 EC2
 
-micro 인스턴스에서 DB + App이 같이 돌면,
+micro 인스턴스에서 DB + App이 같이 돌고 있기 때문에 MySQL InnoDB 버퍼풀 + JVM 힙 + 네이티브/페이지캐시가 경쟁
 
-MySQL InnoDB 버퍼풀 + JVM 힙 + 네이티브/페이지캐시가 경쟁
+결국 system.mem.available 급락하여 스왑/GC 폭증으로 이어짐
 
-결국 system.mem.available 급락 → OOM/스왑/GC 폭증으로 이어짐
+해결
 
-해결 (핵심 3가지)
+1. DB를 RDS로 분리: App 서버에서 MySQL 메모리 풋프린트를 제거
 
-DB를 RDS로 분리: App 서버에서 MySQL 메모리 풋프린트를 제거
-
-InnoDB Buffer Pool 조정(DB를 로컬에 둘 때 기준 / 참고):
-
-API 특성상 “대규모 DB 캐시” 효용이 낮고 트래픽도 생각보다 크지 않음
-
+2. InnoDB Buffer Pool 조정:
+읽기는 단 한번, 쓰기는 없을 수 있는 API 특성상 DB 캐시 효용이 낮음.
 따라서 버퍼풀을 과감히 낮춰 메모리 여유 확보
 
-JVM 힙 상한 설정: micro에서 “힙이 OS 메모리를 잠식”하지 않게 고정
+JVM 힙 상한 설정: micro에서 힙이 OS 메모리를 잠식하지 않게 고정
 ```
 JAVA_OPTS="
   -Xms256m -Xmx384m
