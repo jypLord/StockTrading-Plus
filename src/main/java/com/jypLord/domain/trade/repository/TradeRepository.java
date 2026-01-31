@@ -5,6 +5,7 @@ import com.jypLord.domain.trade.TradeStatus;
 import com.jypLord.domain.trade.entity.Trade;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.repository.query.Param;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -14,9 +15,9 @@ public interface TradeRepository extends R2dbcRepository<Trade, Long> {
     @Query("""
     SELECT *
     FROM trade t JOIN users u ON t.user_id = u.id
-    WHERE t.user_id = ?1 AND t.stock_code = ?2 AND t.trade_status = ?3
+    WHERE t.user_id = :userId AND t.stock_code = :stockCode AND t.trade_status = :status
     """)
-    public Mono<Trade> findByUserIdAndStockCodeAndStatus(Long userId, String stockCode, TradeStatus status);
+    public Mono<Trade> findByUserIdAndStockCodeAndStatus(@Param("userId") Long userId, @Param("stockCode") String stockCode, @Param("status") TradeStatus status);
 
     @Query("""
     SELECT *
@@ -30,7 +31,7 @@ public interface TradeRepository extends R2dbcRepository<Trade, Long> {
     FROM trade
     WHERE user_id = :userId AND trade_status = 'ACTIVE' AND firm = :firm
     """)
-    public Flux<Trade> findValidTradeByUserId(Long userId, BrokerageFirm firm);
+    public Flux<Trade> findValidTradeByUserId(@Param("userId") Long userId, @Param("firm")BrokerageFirm firm);
 
     public Mono<Boolean> existsByUserIdAndStockCodeAndTradeStatus(Long id, String stockCode, TradeStatus status);
 
