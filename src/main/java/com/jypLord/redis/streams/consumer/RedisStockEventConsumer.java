@@ -46,7 +46,7 @@ public class RedisStockEventConsumer {
 
         this.sub = merged
             .flatMap(this::handleAndAck, 16) // 동시성 16
-            .doOnError(e -> log.error("프로세서 에러", e))
+            .doOnError(e -> log.error("레디스 프로세서 에러", e))
             .subscribe();
     }
 

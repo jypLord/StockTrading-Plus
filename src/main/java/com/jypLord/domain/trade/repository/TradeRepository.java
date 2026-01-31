@@ -13,14 +13,14 @@ public interface TradeRepository extends R2dbcRepository<Trade, Long> {
 
     @Query("""
     SELECT *
-    FROM trade t JOIN user u ON t.user_id = u.id
+    FROM trade t JOIN users u ON t.user_id = u.id
     WHERE t.user_id = ?1 AND t.stock_code = ?2 AND t.trade_status = ?3
     """)
     public Mono<Trade> findByUserIdAndStockCodeAndStatus(Long userId, String stockCode, TradeStatus status);
 
     @Query("""
     SELECT *
-    FROM trade t JOIN user u ON t.userId = u.id
+    FROM trade t JOIN users u ON t.userId = u.id
     WHERE t.user_id = ?1 AND t.status = ?2
     """)
     public Flux<Trade> findByUserIdAndStatus(Long userId, TradeStatus status);
