@@ -48,7 +48,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            cd /opt/autoInvest
+            cd /home/ubuntu/autoInvest
             docker compose pull app
             docker compose up -d app
             docker image prune -f
