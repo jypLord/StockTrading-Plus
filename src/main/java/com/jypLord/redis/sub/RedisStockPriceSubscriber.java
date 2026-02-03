@@ -100,6 +100,9 @@ public class RedisStockPriceSubscriber {
                 });
         }
     }
+    public int activeBroadcastCount() {
+        return states.size();
+    }
 
     private StockPriceEvent toEvent(String stockCode, Message<String, String> msg) {
 
