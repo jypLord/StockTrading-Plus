@@ -2,6 +2,7 @@ package com.jypLord.redis.streams.handler;
 
 import com.jypLord.api.BrokerageFirm;
 import com.jypLord.domain.trade.service.TradeService;
+import com.jypLord.metrics.MarketDataMetrics;
 import com.jypLord.redis.streams.StreamKey;
 import com.jypLord.redis.streams.StreamEnvelope;
 import com.jypLord.redis.sub.RedisStockPriceSubscriber;
@@ -19,6 +20,7 @@ public class LosscutEventHandler implements StreamEventHandler {
 
     private final TradeService tradeService;
     private final RedisStockPriceSubscriber priceSubscriber;
+    private final MarketDataMetrics metrics;
 
     @Override
     public StreamKey getKey() {
@@ -39,6 +41,7 @@ public class LosscutEventHandler implements StreamEventHandler {
         Flux<StockPriceEvent> curPrice = priceSubscriber.subscribe(stockCode);
 
 
-        return tradeService.reBuyAfterLossCut(userId, curPrice, firm, losscutPrice, quantity);
+        return tradeService.reBuyAfterLossCut(userId, curPrice, firm, losscutPrice, quantity)
+            .doOnSuccess(v -> metrics.rebuyEventDone());
     }
 }

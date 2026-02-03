@@ -1,6 +1,7 @@
 package com.jypLord.redis.streams.publisher;
 
 import com.jypLord.api.BrokerageFirm;
+import com.jypLord.metrics.MarketDataMetrics;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,6 +19,8 @@ public class RedisStockEventPublisher {
     private final ReactiveRedisTemplate<String, String> redis;
 
     private static final String serverId = System.getenv().getOrDefault("HOSTNAME", "local").intern();
+
+    private final MarketDataMetrics metrics;
 
     public Mono<Void> publishBrokerSessionTerminatedEvent(String stockCode) {
         String streamsKey = "ctrl:stock:" + stockCode;
@@ -51,7 +54,7 @@ public class RedisStockEventPublisher {
             StreamRecords.mapBacked(body).withStreamKey(streamsKey);
 
         return redis.opsForStream().add(record)
-            .doOnSuccess(a-> log.debug("손절 이벤트 송신 성공"))
+            .doOnSuccess(id -> metrics.rebuyEventEnqueued())
             .then();
     }
 }

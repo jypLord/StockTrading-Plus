@@ -52,7 +52,6 @@ public class TradeService {
      */
     public Mono<Void> registerTradeInfo(RegisterTradeInfoRequest dto){
 
-
         return tradeRepository.findByUserIdAndStockCodeAndStatus(dto.userId(), dto.stockCode(), TradeStatus.ACTIVE)
             .flatMap(trade -> {
 
@@ -123,7 +122,6 @@ public class TradeService {
            )
            .then(updateStatusAfterTrade(userId, stockCode, TradeStatus.EXECUTED_LOSSCUT));
     }
-
 
     /*
     거래 완료 후 거래 상태 변경
