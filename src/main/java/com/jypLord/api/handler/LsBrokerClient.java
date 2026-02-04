@@ -65,7 +65,7 @@ public class LsBrokerClient implements BrokerClient{
                 log.debug("LS 증권 Websocket 타임아웃. userId={}, stockCode={}",
                     dto.getUserId(), dto.getStockCodes());
                 return receivePriceViaPolling(dto.getUserId(), dto.getStockAccessToken(), dto.getStockCodes())
-                    .doOnNext(a-> log.info("웹소켓 세션 이상으로 Polling 시작. stockCode= {}", a.stockCode()));
+                    .doOnSubscribe(s-> log.info("웹소켓 세션 이상으로 Polling 시작. stockCode= {}", dto.getStockCodes()));
         });
     }
 
