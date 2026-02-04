@@ -64,7 +64,8 @@ public class LsBrokerClient implements BrokerClient{
             .onErrorResume(TimeoutException.class, e -> {
                 log.debug("LS 증권 Websocket 타임아웃. userId={}, stockCode={}",
                     dto.getUserId(), dto.getStockCodes());
-                return receivePriceViaPolling(dto.getUserId(), dto.getStockAccessToken(), dto.getStockCodes());
+                return receivePriceViaPolling(dto.getUserId(), dto.getStockAccessToken(), dto.getStockCodes())
+                    .doOnNext(a-> log.info("웹소켓 세션 이상으로 Polling 시작. stockCode= {}", a.stockCode()));
         });
     }
 
@@ -124,7 +125,7 @@ public class LsBrokerClient implements BrokerClient{
     private Mono<Sinks.Many<String>> emitPriceRequest(Long userId, String stockCode, String accessToken) {
         return Mono.defer(() -> {
             Sinks.Many<String> sink = webSocketSinks.computeIfAbsent(userId,
-                k -> Sinks.many().unicast().onBackpressureBuffer());
+                k -> Sinks.many().multicast().onBackpressureBuffer());
 
             // payload 생성
             Map<String, String> wsRequestHeader = new HashMap<>();
