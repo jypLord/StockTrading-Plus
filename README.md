@@ -9,7 +9,6 @@
 
 ## 1) 프로젝트 개요
 
-- **프로젝트명**: autoInvest
 - **문제 정의**
   - 실시간 주가 감시는 연결 유지(WebSocket) + 이벤트 폭주 특성이 강해서
   - 작은 인스턴스(EC2 micro)에서는 **세션과 메모리중복 데이터**가 바로 병목으로 다가옴
@@ -18,27 +17,25 @@
   - 거래/후처리 작업은 **Redis Streams**로 **작업 큐**를 구성해 안정적으로 처리
 
 ---
+## 2) 기술 스택
 
-## 2) 아키텍처
+**Language**: ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white)
 
-> 환경: **EC2 micro** 기반  
-> 구성: **App 서버 + 전역 Redis 서버 + RDS(MySQL)**
+**Framework**: ![Spring](https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Spring WebFlux](https://img.shields.io/badge/WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 
-## 3) 기술 스택
+**DB**: ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![R2DBC](https://img.shields.io/badge/R2DBC-0A7FC1?style=for-the-badge&logo=reactivex&logoColor=white)
 
-Language: Java 17
+**Cache / Messaging**: ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 
-Framework: Spring Boot (WebFlux)
+**Infra**: ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
+![RDS](https://img.shields.io/badge/RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-DB: MySQL (AWS RDS)
-
-Cache / Messaging: Redis
-
-Redis Pub/Sub: 공통 데이터 브로드캐스팅
-
-Redis Streams: 작업 큐
-
-Infra: AWS EC2 micro, RDS
+## 3) 아키텍처
+<img width="1512" height="993" alt="image" src="https://github.com/user-attachments/assets/3e089228-8830-4bea-909f-87751f972f66" />
 
 
 ## 4) 트러블 슈팅
