@@ -108,7 +108,7 @@ public class LsBrokerClient implements BrokerClient{
                             )
                     )
                     .bodyToMono(String.class)
-                    .timeout(Duration.ofSeconds(2))
+                    .timeout(Duration.ofSeconds(3))
                     .map(json->{
 
                         JsonNode root = JsonUtil.toJsonNode(json);

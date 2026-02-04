@@ -4,12 +4,17 @@ import com.jypLord.api.BrokerageFirm;
 import com.jypLord.api.dto.request.getPrice.LsPriceRequest;
 import com.jypLord.api.dto.response.AssetPrice;
 import com.jypLord.api.handler.LsBrokerClient;
+import com.jypLord.domain.trade.dto.request.RegisterTradeInfoRequest;
+import com.jypLord.domain.trade.repository.TradeRepository;
+import com.jypLord.domain.trade.service.TradeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 @Log4j2
@@ -19,11 +24,12 @@ import reactor.core.publisher.Flux;
 public class TestController {
 
     private final LsBrokerClient lsBrokerClient;
+    private final TradeService tradeService;
 
-    @PostMapping("test")
-    public Flux<AssetPrice> test() {
+    @PostMapping("/settingTest")
+    public Mono<ResponseEntity<Void>> test(BrokerageFirm firm, String code, int price, int quantity) {
 
-        String accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0b2tlbiIsImF1ZCI6IjQwYjVhNTZiLWJkZTEtNGRmYy04ZmZiLTA4ZjM4MzE0ZTgxMiIsIm5iZiI6MTc2Mzk2NjU4OSwiZ3JhbnRfdHlwZSI6IkNsaWVudCIsImlzcyI6InVub2d3IiwiZXhwIjoxNzY0MDIxNTk5LCJpYXQiOjE3NjM5NjY1ODksImp0aSI6IlBTUTJrekFMM0d5RkRieXE3RGtTUExBeDZ3Z3c3TUJKREtiayJ9.8NN1ZHvl2CUrcilz3jvzXmA4hkV_dAo88eShWCuwlsYL3My81OkPp0kzTtIJIOZPOIL9yIhn6t6S1XWpphSG3Q";
-        return lsBrokerClient.receivePrice(new LsPriceRequest(1L, BrokerageFirm.LS,accessToken, "086520"));
+        return tradeService.registerTradeInfo(new RegisterTradeInfoRequest(1L, firm, code, price, quantity))
+            .thenReturn(ResponseEntity.ok().build());
     }
 }

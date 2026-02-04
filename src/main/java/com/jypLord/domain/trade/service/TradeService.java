@@ -55,10 +55,11 @@ public class TradeService {
         return tradeRepository.findByUserIdAndStockCodeAndStatus(dto.userId(), dto.stockCode(), TradeStatus.ACTIVE)
             .flatMap(trade -> {
 
-                if(trade != null && trade.getUserSetPrice() == dto.price()) return Mono.error(new AlreadyBoundException("이미 추가된 종목임"));
+                if(trade.getUserSetPrice() == dto.price()) return Mono.error(new AlreadyBoundException("이미 추가된 종목임"));
 
-                return tradeRepository.save( new Trade(dto.userId(), dto.stockCode(),dto.firm() ,dto.price(), dto.quantity(), TradeStatus.ACTIVE));
+                return Mono.error(new AlreadyBoundException("이미 추가된 종목임"));
             })
+            .switchIfEmpty(tradeRepository.save( new Trade(dto.userId(), dto.stockCode(),dto.firm() ,dto.price(), dto.quantity(), TradeStatus.ACTIVE)))
             .then();
     }
 
