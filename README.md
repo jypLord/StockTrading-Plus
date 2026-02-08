@@ -41,7 +41,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 ## 3) 아키텍처
-![autoInvest](https://github.com/user-attachments/assets/039866f3-01a3-4956-b6cf-f1f008309f3a)
+![autoInvest_최종](https://github.com/user-attachments/assets/917b9c02-903a-4970-8344-c2ee217c30fe)
 
 
 
