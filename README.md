@@ -41,7 +41,8 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 ## 3) 아키텍처
-<img width="1512" height="993" alt="image" src="https://github.com/user-attachments/assets/3e089228-8830-4bea-909f-87751f972f66" />
+![autoInvest](https://github.com/user-attachments/assets/039866f3-01a3-4956-b6cf-f1f008309f3a)
+
 
 
 ## 4) 트러블 슈팅
