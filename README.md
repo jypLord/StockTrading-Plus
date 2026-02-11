@@ -43,6 +43,7 @@
 ## 3) 아키텍처
 ![autoInvest_최종](https://github.com/user-attachments/assets/917b9c02-903a-4970-8344-c2ee217c30fe)
 
+<img width="5605" height="6125" alt="Untitled diagram-2026-02-11-051546" src="https://github.com/user-attachments/assets/50a2d26d-3247-42c2-9612-d2513def6db7" />
 
 
 ## 4) 트러블 슈팅
