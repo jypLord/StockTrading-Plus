@@ -1,6 +1,7 @@
-package com.jypLord.redis.streams;
+package com.jypLord.redis.streams.consumer.handler;
 
-import com.jypLord.redis.streams.handler.StreamEventHandler;
+import com.jypLord.redis.streams.StreamEnvelope;
+import com.jypLord.redis.streams.StreamKey;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 

@@ -39,10 +39,11 @@ public class RedisStockEventPublisher {
             .then();
     }
 
-    public Mono<Void> publishLosscutEvent(Long userId, String stockCode, BrokerageFirm firm, int losscutPrice, int quantity) {
+    public Mono<Void> publishLosscutEvent(Long userId, Long tradeId, String stockCode, BrokerageFirm firm, int losscutPrice, int quantity) {
         String streamsKey = "event:losscut:server:" + serverId;
 
         Map<String, String> body = Map.of(
+            "idempotencyKey", tradeId.toString(),
             "userId",  userId.toString(),
             "stockCode", stockCode,
             "broker", firm.toString(),

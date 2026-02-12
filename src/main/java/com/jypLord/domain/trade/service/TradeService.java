@@ -14,7 +14,7 @@ import com.jypLord.domain.user.User;
 import com.jypLord.domain.user.UserRepository;
 import com.jypLord.exception.broker.BrokerException;
 import com.jypLord.exception.trade.NoValidTradeException;
-import com.jypLord.redis.sub.RedisStockPriceSubscriber.StockPriceEvent;
+import com.jypLord.redis.sub.StockPrice;
 import com.jypLord.util.DTOMapper;
 import java.rmi.AlreadyBoundException;
 import java.util.Map;
@@ -98,9 +98,8 @@ public class TradeService {
                                         e-> redisPricePublisher.removeLockIfOwner(asset.sourceUserId(), asset.stockCode())
                                             .then(redisStockEventPublisher.publishBrokerSessionTerminatedEvent(asset.stockCode()))
                                     )
-                            ).then(losscutMonitoring(userId, user.getMarketAccessToken(), firm, trade.getStockCode(),
+                            ).then(losscutMonitoring( userId, trade.getId(), user.getMarketAccessToken(), firm, trade.getStockCode(),
                                 trade.getUserSetPrice(), trade.getQuantity())))
-
                     );
     }
 
@@ -109,7 +108,7 @@ public class TradeService {
     주가 감시 손절가 도달시 손절
      */
     public Mono<Void> losscutMonitoring(
-        Long userId ,String marketAccessToken, BrokerageFirm firm, String stockCode,int userSetPrice, int quantity
+        Long userId, Long tradeId, String marketAccessToken, BrokerageFirm firm, String stockCode,int userSetPrice, int quantity
     ) {
 
        return redisPriceSubscriber.subscribe(stockCode)
@@ -117,44 +116,35 @@ public class TradeService {
            .filter(info -> info.price() <= userSetPrice)
             // 한 건의 데이터만 받아서
            .take(1)
+           .filterWhen(stock-> updateTradeStatusForIdempotency(tradeId, TradeStatus.ACTIVE, TradeStatus.EXECUTED_LOSSCUT))
+
            // 팔고, 재매수 감시를 위한 이벤트 발행
            .flatMap(info -> brokerClient.sell(new SellRequest(firm, stockCode, userSetPrice, quantity, marketAccessToken))
-               .and(redisStockEventPublisher.publishLosscutEvent(userId, stockCode, firm, userSetPrice, quantity))
+               .and(redisStockEventPublisher.publishLosscutEvent(userId, tradeId, stockCode, firm, userSetPrice, quantity))
            )
-           .then(updateStatusAfterTrade(userId, stockCode, TradeStatus.EXECUTED_LOSSCUT));
+           .then();
     }
-
     /*
-    거래 완료 후 거래 상태 변경
-    */
-    public Mono<Void> updateStatusAfterTrade(Long userId, String stockCode, TradeStatus status) {
-        return tradeRepository.findByUserIdAndStockCodeAndStatus(userId, stockCode, status)
-            .flatMap(trade -> {
-                trade.setTradeStatus(status);
-                return tradeRepository.save(trade);
-            }).then();
+    * 증권사 API를 통해 실제 매수/매도 전, 신호의 멱등성 체크를 위하여 먼저 호출.
+    * 멱등키로 사용된 tradeId 와 또 강한 멱등성 보장을 위해 Trade의 Status 를 검증
+    * */
+    public Mono<Boolean> updateTradeStatusForIdempotency(Long tradeId, TradeStatus expectedStatus, TradeStatus newStatus) {
+        return tradeRepository.updateTradeStatus(tradeId, expectedStatus, newStatus);
     }
 
    /*
    * 손절한 종목을 손절가에 재매수
    */
-    public Mono<Void> reBuyAfterLossCut(Long userId, Flux<StockPriceEvent> currentPrice, BrokerageFirm firm , int losscutPrice, int quantity) {
+    public Mono<Void> reBuyAfterLossCut(Long IdempotencyKey, Long userId, Flux<StockPrice> currentPrice, BrokerageFirm firm , int losscutPrice, int quantity) {
 
         return userRepository.findById(userId)
             .flatMapMany(user ->
                 currentPrice
                     .filter(stock -> stock.price() > losscutPrice)
                     .next()
+                    .filterWhen(event -> updateTradeStatusForIdempotency(IdempotencyKey, TradeStatus.EXECUTED_LOSSCUT, TradeStatus.EXECUTED_BUY ))
                     .flatMap(risingStock -> brokerClient.buy(new BuyRequest(firm, risingStock.stockCode(), losscutPrice, quantity, user.getMarketAccessToken())))
-            )
-
-            .flatMap(buyResponse->
-                Mono.defer(() -> {
-                    Trade reBuyStock = new Trade(userId, buyResponse.getStockCode(), buyResponse.getPrice(),
-                        buyResponse.getQuantity(), TradeStatus.EXECUTED_BUY);
-
-                    return tradeRepository.save(reBuyStock);
-            })).then();
+            ).then();
     }
 }
 

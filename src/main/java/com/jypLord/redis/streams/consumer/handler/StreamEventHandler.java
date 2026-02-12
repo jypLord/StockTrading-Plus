@@ -1,4 +1,4 @@
-package com.jypLord.redis.streams.handler;
+package com.jypLord.redis.streams.consumer.handler;
 
 import com.jypLord.redis.streams.StreamEnvelope;
 import com.jypLord.redis.streams.StreamKey;

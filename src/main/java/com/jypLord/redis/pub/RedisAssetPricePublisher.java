@@ -39,6 +39,7 @@ public class RedisAssetPricePublisher {
         return redis.execute(script,List.of(lockKey), serverId +":"+ userId.toString(), LOCK_TTL)
             .single();
     }
+
     /*
     * 분산락 소유자인지 확인하고 값 publish
     * */

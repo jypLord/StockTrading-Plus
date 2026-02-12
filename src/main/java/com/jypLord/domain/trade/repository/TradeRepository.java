@@ -3,6 +3,7 @@ package com.jypLord.domain.trade.repository;
 import com.jypLord.api.BrokerageFirm;
 import com.jypLord.domain.trade.TradeStatus;
 import com.jypLord.domain.trade.entity.Trade;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.repository.query.Param;
@@ -35,6 +36,18 @@ public interface TradeRepository extends R2dbcRepository<Trade, Long> {
 
     public Mono<Boolean> existsByUserIdAndStockCodeAndTradeStatus(Long id, String stockCode, TradeStatus status);
 
+
+    @Modifying
+    @Query("""
+    UPDATE trade
+    SET trade_status = :newStatus
+    WHERE id = :tradeId
+      AND trade_status = :expectedStatus
+    """)
+    Mono<Boolean> updateTradeStatus(
+        @Param("tradeId") Long tradeId,
+        @Param("expectedStatus") TradeStatus expectedStatus,
+        @Param("newStatus") TradeStatus newStatus);
 
     @Query("""
         UPDATE trade

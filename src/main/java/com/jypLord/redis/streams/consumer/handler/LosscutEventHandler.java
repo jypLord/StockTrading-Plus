@@ -1,4 +1,4 @@
-package com.jypLord.redis.streams.handler;
+package com.jypLord.redis.streams.consumer.handler;
 
 import com.jypLord.api.BrokerageFirm;
 import com.jypLord.domain.trade.service.TradeService;
@@ -6,7 +6,7 @@ import com.jypLord.metrics.MarketDataMetrics;
 import com.jypLord.redis.streams.StreamKey;
 import com.jypLord.redis.streams.StreamEnvelope;
 import com.jypLord.redis.sub.RedisStockPriceSubscriber;
-import com.jypLord.redis.sub.RedisStockPriceSubscriber.StockPriceEvent;
+import com.jypLord.redis.sub.StockPrice;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -30,6 +30,7 @@ public class LosscutEventHandler implements StreamEventHandler {
     @Override
     public Mono<Void> handle(StreamEnvelope env) {
 
+        Long idempotencyKey = Long.parseLong(env.record().getValue().get("IdempotencyKey"));
         Long userId = Long.parseLong(env.record().getValue().get("userId"));
         String stockCode = env.record().getValue().get("stockCode");
 
@@ -38,10 +39,10 @@ public class LosscutEventHandler implements StreamEventHandler {
         int losscutPrice = Integer.parseInt(env.record().getValue().get("losscutPrice"));
         int quantity = Integer.parseInt(env.record().getValue().get("quantity"));
 
-        Flux<StockPriceEvent> curPrice = priceSubscriber.subscribe(stockCode);
+        Flux<StockPrice> curPrice = priceSubscriber.subscribe(stockCode);
 
 
-        return tradeService.reBuyAfterLossCut(userId, curPrice, firm, losscutPrice, quantity)
+        return tradeService.reBuyAfterLossCut(idempotencyKey, userId, curPrice, firm, losscutPrice, quantity)
             .doOnSuccess(v -> metrics.rebuyEventDone());
     }
 }

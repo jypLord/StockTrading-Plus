@@ -1,6 +1,6 @@
 package com.jypLord.redis.streams.consumer;
 
-import com.jypLord.redis.streams.EventStreamDispatcher;
+import com.jypLord.redis.streams.consumer.handler.EventStreamDispatcher;
 import com.jypLord.redis.streams.StreamEnvelope;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.stream.StreamReceiver;

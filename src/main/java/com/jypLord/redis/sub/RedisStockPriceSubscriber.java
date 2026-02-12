@@ -19,20 +19,18 @@ public class RedisStockPriceSubscriber {
 
     private final ReactiveRedisMessageListenerContainer container;
 
-    public record StockPriceEvent(String stockCode, long price) {}
-
     private final ConcurrentHashMap<String, State> states = new ConcurrentHashMap<>();
 
 
 
     private static final class State {
-        final Sinks.Many<StockPriceEvent> sink =
+        final Sinks.Many<StockPrice> sink =
             Sinks.many().multicast().directBestEffort();
         final AtomicInteger refCount = new AtomicInteger(0);
         volatile Disposable redisSub;
     }
 
-    public Flux<StockPriceEvent> subscribe(String stockCode) {
+    public Flux<StockPrice> subscribe(String stockCode) {
         return Flux.defer(() -> {
 
             State state = states.computeIfAbsent(stockCode, k -> new State());
@@ -104,13 +102,13 @@ public class RedisStockPriceSubscriber {
         return states.size();
     }
 
-    private StockPriceEvent toEvent(String stockCode, Message<String, String> msg) {
+    private StockPrice toEvent(String stockCode, Message<String, String> msg) {
 
         String body = msg.getMessage();
 
         long price = Long.parseLong(body.trim());
 
-        return new StockPriceEvent(stockCode, price);
+        return new StockPrice(stockCode, price);
     }
 
 }
