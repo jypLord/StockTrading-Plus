@@ -1,44 +1,49 @@
 # autoInvest
 
-주가를 **실시간 감시**하다가  
-① 지정가 도달 → **시장가 손절**  
-② 이후 다시 지정가 도달 → **재매수**  
-까지 자동으로 실행하는 API 서버입니다
+주식 관리 API입니다.
+
+주식을 하면서 손절을 못하는 이유는, "혹시 여기서 다시 오르면 어떡하지?" 라는 생각 때문입니다.
+
+주가를 실시간 (WebSocket && HTTP Polling) 으로 감시하다가, 지정한 손절가에 도달하면 자동 손절.
+이후 감시를 지속하여 주가가 손절가에 다시 도달하면 재매수하게 하는 API입니다.
+
+현재 LS 증권의 세션을 다룰 수 있으며, 다른 증권사를 추가하기 위해 전략패턴(디자인패턴)을 사용하여 원활한 확장성을 제고하였습니다.
 
 ---
 
-## 1) 프로젝트 개요
-
-- **프로젝트명**: autoInvest
+## 1) 문제 해결 요약
+### 메모리 트러블
 - **문제 정의**
-  - 실시간 주가 감시는 연결 유지(WebSocket) + 이벤트 폭주 특성이 강해서
-  - 작은 인스턴스(EC2 micro)에서는 **세션과 메모리중복 데이터**가 바로 병목으로 다가옴
+  - EC2 micro 환경에서 계속 유지되고 있는 유저들의 웹소켓 세션으로 메모리가 포화되어 한 서버에 많은 유저를 감당하기 어려움.
+  - 
 - **해결 방향**
-  - 실시간 주가 수신은 **한 번만** 받아서 전역 Redis로 **브로드캐스팅(Pub/Sub)**
+  - 모든 서버에서 **주식 종목당 단 한 개의 세션만 유지**하고, 전역 Redis로 **브로드캐스팅(Pub/Sub)**
+  - 중복 쓰기 및 데이터 정합성을 보장하기 위해 **Redis 분산락** 으로 유일한 쓰기 보장. 
+
   - 거래/후처리 작업은 **Redis Streams**로 **작업 큐**를 구성해 안정적으로 처리
 
 ---
+## 2) 기술 스택
 
-## 2) 아키텍처
+**Language**: ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white)
 
-> 환경: **EC2 micro** 기반  
-> 구성: **App 서버 + 전역 Redis 서버 + RDS(MySQL)**
+**Framework**: ![Spring](https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Spring WebFlux](https://img.shields.io/badge/WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 
-## 3) 기술 스택
+**DB**: ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![R2DBC](https://img.shields.io/badge/R2DBC-0A7FC1?style=for-the-badge&logo=reactivex&logoColor=white)
 
-Language: Java 17
+**Cache / Messaging**: ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 
-Framework: Spring Boot (WebFlux)
+**Infra**: ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
+![RDS](https://img.shields.io/badge/RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-DB: MySQL (AWS RDS)
+## 3) 아키텍처
+![autoInvest_최종](https://github.com/user-attachments/assets/917b9c02-903a-4970-8344-c2ee217c30fe)
 
-Cache / Messaging: Redis
-
-Redis Pub/Sub: 공통 데이터 브로드캐스팅
-
-Redis Streams: 작업 큐
-
-Infra: AWS EC2 micro, RDS
+<img width="5605" height="6125" alt="Untitled diagram-2026-02-11-051546" src="https://github.com/user-attachments/assets/50a2d26d-3247-42c2-9612-d2513def6db7" />
 
 
 ## 4) 트러블 슈팅
