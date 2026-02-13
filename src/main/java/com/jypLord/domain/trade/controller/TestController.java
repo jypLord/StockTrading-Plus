@@ -19,17 +19,17 @@ import reactor.core.publisher.Mono;
 
 @Log4j2
 @RestController
-@RequestMapping("/stocks")
 @RequiredArgsConstructor
 public class TestController {
 
     private final LsBrokerClient lsBrokerClient;
     private final TradeService tradeService;
 
-    @PostMapping("/settingTest")
-    public Mono<ResponseEntity<Void>> test(BrokerageFirm firm, String code, int price, int quantity) {
+    @PostMapping("/test")
+    public Mono<ResponseEntity<Void>> test(String json) {
 
-        return tradeService.registerTradeInfo(new RegisterTradeInfoRequest(1L, firm, code, price, quantity))
-            .thenReturn(ResponseEntity.ok().build());
+        String a = new String(json);
+
+        return Mono.just(ResponseEntity.ok().build());
     }
 }

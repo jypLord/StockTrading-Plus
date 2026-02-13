@@ -27,7 +27,7 @@ public class SecurityConfig {
             .formLogin( login -> login.disable())
 
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/signUp", "/login").permitAll()
+                .pathMatchers("/signUp", "/login", "/test").permitAll()
                 .anyExchange().authenticated()
             )
             .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
