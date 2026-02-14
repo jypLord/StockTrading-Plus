@@ -83,9 +83,6 @@ JVM 힙 상한 설정: micro에서 힙이 OS 메모리를 잠식하지 않게 �
 ```
 JAVA_OPTS="
   -Xms256m -Xmx384m
-  -XX:MaxMetaspaceSize=128m
-  -XX:+UseG1GC
-  -XX:MaxGCPauseMillis=200
   -XX:+HeapDumpOnOutOfMemoryError
   -XX:HeapDumpPath=/var/log/autoInvest/heapdump.hprof
   -Dfile.encoding=UTF-8
@@ -95,6 +92,5 @@ JAVA_OPTS="
 ```
 [mysqld]
 innodb_buffer_pool_size=128M
-innodb_buffer_pool_instances=1
 max_connections=100
 ```
