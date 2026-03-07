@@ -85,7 +85,7 @@ JAVA_OPTS="
 "
 ```
 
-### 4-3. App 서버 Scale Out에 따른 App 서버 DB 커넥션풀 조정 및 최대 
+### 4-3. App 서버 Scale Out에 DB 커넥션풀 조정 및 최대 
 K6으로 10,000 동시 접속 부하 테스트에서 R2DBC connection pool의 pending acquire 가 급증.
 
 DB는 CloudWatch의 DatabaseConnections으로 모니터링 결과 max_connections 을 꽉채운 상태에서 CPU 사용률이 40% 대를 유지하는 것을 확인하고, 애플리케이션 커넥션 풀이 병목으로 작용하고 있음을 확인.
