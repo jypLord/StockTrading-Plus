@@ -20,7 +20,7 @@
   - 모든 서버에서 **주식 종목당 단 한 개의 세션만 유지**하고, 전역 Redis로 **브로드캐스팅(Pub/Sub)**
   - 중복 쓰기 및 데이터 정합성을 보장하기 위해 **Redis 분산락** 으로 유일한 쓰기 보장. 
 
-  - 거래/후처리 작업은 **Redis Streams**로 **작업 큐**를 구성해 안정적으로 처리
+  - 거래/후처리 작업은 **Redis Streams**로 **MQ**를 구성해 안정적으로 처리
 
 ---
 ## 2) 기술 스택
@@ -62,35 +62,35 @@ Redis 서버를 분리하고 전역 Pub/Sub 브로드캐스팅으로 “시세 �
 
 App 서버는 **종목당 1개**의 수신 파이프라인만 유지하고, 내부/다른 서버로는 Redis로 전파
 
+
 ### 4-2. 순수 메모리 부족
 **문제**
 
 기존 상태: MySQL + JVM 기본 옵션 + 단일 EC2
 
-micro 인스턴스에서 DB + App이 같이 돌고 있기 때문에 MySQL InnoDB 버퍼풀 + JVM 힙 + 네이티브/페이지캐시가 경쟁
+micro 인스턴스에서 DB + App이 같이 돌고 있었기 때문에 MySQL 과 JVM 힙 경쟁
 
 결국 system.mem.available 급락하여 스왑/GC 폭증으로 이어짐
 
 **해결**
 
-1. DB를 RDS로 분리: App 서버에서 MySQL 메모리 풋프린트를 제거
+1. DB를 RDS로 분리
+2. Webflux는 JVM Stack 을 적게 사용하므로 Stack 메모리 하향조정, Heap 상향조정
 
-2. InnoDB Buffer Pool 조정:
-읽기는 단 한번, 쓰기는 없을 수 있는 API 특성상 DB 캐시 효용이 낮음.
-따라서 버퍼풀을 과감히 낮춰 메모리 여유 확보
-
-JVM 힙 상한 설정: micro에서 힙이 OS 메모리를 잠식하지 않게 고정
 ```
 JAVA_OPTS="
-  -Xms256m -Xmx384m
+  -Xms256m -Xmx512m
   -XX:+HeapDumpOnOutOfMemoryError
-  -XX:HeapDumpPath=/var/log/autoInvest/heapdump.hprof
   -Dfile.encoding=UTF-8
 "
 ```
 
-```
-[mysqld]
-innodb_buffer_pool_size=128M
-max_connections=100
-```
+### 4-3. App 서버 Scale Out에 따른 App 서버 DB 커넥션풀 조정 및 최대 
+K6으로 10,000 동시 접속 부하 테스트에서 R2DBC connection pool의 pending acquire 가 급증.
+
+DB는 CloudWatch의 DatabaseConnections으로 모니터링 결과 max_connections 을 꽉채운 상태에서 CPU 사용률이 40% 대를 유지하는 것을 확인하고, 애플리케이션 커넥션 풀이 병목으로 작용하고 있음을 확인.
+
+**해결**
+- R2DBC 커넥션 풀을 10 -> 20으로 상향 조정
+- AWS ASG의 최대 서버 노드 개수를 8로 잡았기 때문에 그에 따라 MySQL max_connections 85 -> 170 으로 상향조정
+
