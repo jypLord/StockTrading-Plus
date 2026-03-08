@@ -91,6 +91,9 @@ JAVA_OPTS="
 ```
 
 ### 4-3. App 서버 Scale Out에 DB 커넥션풀 조정 및 최대 
+
+**문제**
+
 K6으로 10,000 동시 접속하여 단순 SELECT 쿼리 부하 테스트에서 P95가 450ms 수준.
 R2DBC connection pool의 pending acquire 가 급증.
 
