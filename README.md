@@ -110,4 +110,5 @@ autoInvest는 사용자가 설정한 손절가를 기준으로 실시간 시세�
 해결: R2DBC pool 10 → 20, MySQL max_connections 85 → 170 조정
 
 결과: p95 450ms → 150ms로 개선
+
 ---
