@@ -13,10 +13,10 @@ import com.jypLord.domain.trade.repository.TradeRepository;
 import com.jypLord.domain.user.User;
 import com.jypLord.domain.user.UserRepository;
 import com.jypLord.exception.broker.BrokerException;
+import com.jypLord.exception.trade.AlreadyExistTradeException;
 import com.jypLord.exception.trade.NoValidTradeException;
 import com.jypLord.redis.sub.StockPrice;
 import com.jypLord.util.DTOMapper;
-import java.rmi.AlreadyBoundException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,10 +54,11 @@ public class TradeService {
 
         return tradeRepository.findByUserIdAndStockCodeAndStatus(dto.userId(), dto.stockCode(), TradeStatus.ACTIVE)
             .flatMap(trade -> {
+                if (trade.getUserSetPrice() == dto.price()) {
+                    return Mono.error(new AlreadyExistTradeException("이미 추가된 종목임"));
+                }
 
-                if(trade.getUserSetPrice() == dto.price()) return Mono.error(new AlreadyBoundException("이미 추가된 종목임"));
-
-                return Mono.error(new AlreadyBoundException("이미 추가된 종목임"));
+                return Mono.error(new AlreadyExistTradeException("이미 추가된 종목임"));
             })
             .switchIfEmpty(tradeRepository.save( new Trade(dto.userId(), dto.stockCode(),dto.firm() ,dto.price(), dto.quantity(), TradeStatus.ACTIVE)))
             .then();
@@ -147,6 +148,5 @@ public class TradeService {
             ).then();
     }
 }
-
 
 

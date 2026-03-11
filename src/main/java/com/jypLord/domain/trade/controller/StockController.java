@@ -8,6 +8,7 @@ import com.jypLord.domain.trade.service.TradeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +30,7 @@ public class StockController {
     @PostMapping("/priceSetting")
     public Mono<ResponseEntity<Void>> registerThresholdPrice(@Valid @RequestBody RegisterTradeInfoRequest dto) {
         return tradeService.registerTradeInfo(dto)
-            .then(Mono.just(ResponseEntity.ok().build()));
+            .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()));
     }
 
 
@@ -38,9 +39,8 @@ public class StockController {
        BrokerageFirm firm) {
 
         return tradeService.manageAsset(userId, firm)
-            .then(Mono.just(ResponseEntity.ok().build()));
+            .then(Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).build()));
 
    }
 
 }
-
