@@ -7,7 +7,7 @@ import com.jypLord.auth.dto.response.LoginResponse;
 import com.jypLord.auth.dto.response.SignUpResponse;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -27,7 +27,7 @@ public class AuthController {
     @PostMapping("/signUp")
     public Mono<ResponseEntity<SignUpResponse>> signUp(@RequestBody SignUpRequest dto) {
         return authService.signUp(dto)
-            .map(ResponseEntity::ok);
+            .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
     }
 
     @PostMapping("/login")
