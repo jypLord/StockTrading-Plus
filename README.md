@@ -1,108 +1,113 @@
 # autoInvest
 
-주식 관리 API입니다.
+> 실시간 시세 감시 기반 자동 손절/재매수 백엔드 API  
+> WebFlux, Redis, R2DBC를 활용해 적은 자원으로 많은 동시 연결을 처리하는 구조를 설계했습니다.
 
-주식을 하면서 손절을 못하는 이유는, "혹시 여기서 다시 오르면 어떡하지?" 라는 생각 때문입니다.
+## 프로젝트 소개
 
-주가를 실시간 (WebSocket && HTTP Polling) 으로 감시하다가, 지정한 손절가에 도달하면 자동 손절.
-이후 감시를 지속하여 주가가 손절가에 다시 도달하면 재매수하게 하는 API입니다.
+autoInvest는 사용자가 설정한 손절가를 기준으로 실시간 시세를 감시하고,  
+조건 도달 시 자동 손절한 뒤 이후 다시 조건에 맞으면 재매수까지 처리하는 주식 관리 API입니다.
 
-현재 LS 증권의 세션을 다룰 수 있으며, 다른 증권사를 추가하기 위해 전략패턴(디자인패턴)을 사용하여 원활한 확장성을 제고하였습니다.
+**실시간 데이터 수신**, **중복 처리 방지**, **서버 간 데이터 공유**, **비동기 후처리 안정성**까지 고려해 설계한 프로젝트입니다.
+실시간 연결이 많은 환경에서 발생하는 **세션 폭증, 메모리 부족, 중복 처리, 커넥션 풀 병목** 문제를 해결하는 과정까지 담았습니다.
+
+현재는 **LS증권 연동**을 지원하며,  
+추후 다른 증권사들을 쉽게 추가할 수 있도록 **전략 패턴**를 적용했습니다.
+
+---
+
+
+## 핵심 기능
+
+- 사용자 인증 및 인가
+- 관심 종목 감시 등록
+- 실시간 시세 수신
+- 손절가 도달 시 자동 매도
+- 재진입 조건 충족 시 자동 매수
+- 거래 이력 조회
+- 서버 간 실시간 가격 데이터 공유
+- 중복 거래 방지 및 후처리 비동기화
 
 ---
 
-## 1) 문제 해결 요약
-### 메모리 트러블
-- **문제 정의**
-  - EC2 micro 환경에서 계속 유지되고 있는 유저들의 웹소켓 세션으로 메모리가 포화되어 한 서버에 많은 유저를 감당하기 어려움.
-  - 
-- **해결 방향**
-  - 모든 서버에서 **주식 종목당 단 한 개의 세션만 유지**하고, 전역 Redis로 **브로드캐스팅(Pub/Sub)**
-  - 중복 쓰기 및 데이터 정합성을 보장하기 위해 **Redis 분산락** 으로 유일한 쓰기 보장. 
+## 기술 스택
 
-  - 거래/후처리 작업은 **Redis Streams**로 **MQ**를 구성해 안정적으로 처리
+- Language: Java 17
+- Framework: Spring Boot, Spring WebFlux, Spring Security
+- Database: MySQL, R2DBC
+- Cache / Messaging: Redis Pub/Sub, Redis Streams
+- Infra: AWS EC2, RDS, Docker, GitHub Actions
+- Monitoring: AWS CloudWatch, 메트릭 기반 성능 분석
 
 ---
-## 2) 기술 스택
 
-**Language**: ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white)
-
-**Framework**: ![Spring](https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
-![Spring WebFlux](https://img.shields.io/badge/WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
-
-**DB**: ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![R2DBC](https://img.shields.io/badge/R2DBC-0A7FC1?style=for-the-badge&logo=reactivex&logoColor=white)
-
-**Cache / Messaging**: ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-
-**Infra**: ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
-![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
-![RDS](https://img.shields.io/badge/RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-
-## 3) 아키텍처
-![autoInvest_최종](https://github.com/user-attachments/assets/917b9c02-903a-4970-8344-c2ee217c30fe)
-
-<img width="5605" height="6125" alt="Untitled diagram-2026-02-11-051546" src="https://github.com/user-attachments/assets/50a2d26d-3247-42c2-9612-d2513def6db7" />
+## 아키텍처
+![autoInvest_최종](https://github.com/user-attachments/assets/6a948b89-c955-4d75-8758-8dfd851d3c1d)
 
 
-## 4) 트러블 슈팅
-### 4-1. 너무 많은 세션과 중복 데이터
-**문제**
+### 구조 요약
+- 외부 증권사로부터 실시간 시세 수신
+- 동일 종목은 서버마다 개별 수신하지 않고 공유
+- Redis Pub/Sub으로 가격 데이터를 각 App 서버에 브로드캐스팅
+- 거래/후처리는 Redis Streams 기반으로 분리
+- 분산 환경에서 중복 실행 방지를 위해 Redis 기반 락 적용
+<img width="5605" height="6125" alt="Untitled diagram-2026-02-11-051546" src="https://github.com/user-attachments/assets/101e3c04-156b-4b0e-a9e6-e522105f152c" />
 
-K6 기반 연결 부하 테스트에서 동시 클라이언트 연결 수가 약 400개 수준일 때 CPU Utilization이 99%까지 급증.
-또한 TCP connection 및 fd 수가 클라이언트 수에 비례해 빠르게 증가.
+---
 
-이는 각 클라이언트마다 외부 주가 수신용 WebSocket 연결을 개별적으로 생성하던 구조 때문인 것으로 판단.
+## 기술 선택 이유
 
-**해결**
+### 1. Spring WebFlux
+2v CPU를 가지고있는 EC2 t3.micro 환경에서 많은 클라이언트 연결과 WebSocket 세션을 유지해야 하기 때문에 Blocking 모델에는 한계가 있었습니다.
+적은 자원으로 더 많은 연결을 처리하고 I/O 효율을 극대화 하기 위해 WebFlux를 선택했습니다.
 
-대부분의 투자자는 동일한 인기 종목의 시세를 동시에 구독하므로 클라이언트마다 개별 수신 세션을 생성하는 대신 
-동일 **종목에 대한 수신 데이터를 서버 간 공유하는 구조로 개선**
+### 2. Redis Pub/Sub
+많은 scale-out 서버를 대상으로 하나의 데이터 소스에서 실시간 데이터를 Broadcasting 하기 위해 선택했습니다.
 
-Redis 서버를 App 서버와 분리하여 Redis Pub/Sub 브로드캐스팅으로 수신 데이터를 각 App 서버에 전파하여 이를 공유
+### 3. Redis Streams
+실시간 데이터 브로드캐스팅은 API의 기둥이기 때문에, 예비 서버들을 두어야 했습니다. 
+그 서버에 Replica와 Sentinel을 구성하고 RDB와 AOF 를 통해 영속성 및 가용성 을 확보하여 MQ를 Redis Streams로 사용하는 것으로 결정하였습니다.
 
+기술 목표가 '최대한 적은 비용으로 최대 출력' 이기 때문에, Kafka 사용 등 추가 서버 노드를 발생시키지 않는 방법을 선택했습니다.
 
-**결과**
+---
 
-한 서버에 동시연결할 수 있는 클라이언트 수 700% 최대 이상 증가(400 -> 3000)
-서버 운영안정성을 위해 1500 동시 접속까지 허용.
+## 트러블슈팅 및 성능 개선
+### 1. 실시간 주가 수신 구조 개선
 
-### 4-2. 순수 메모리 부족
-**문제**
+문제: 400명 이상 동시 수신 시 CPU 사용률 90% 초과, 에러율 급증
 
-기존 상태: MySQL + JVM 기본 옵션 + 단일 EC2
+원인: 클라이언트마다 외부 WebSocket 연결을 개별 생성해 동일 종목도 중복 수신
 
-micro 인스턴스에서 DB + App이 같이 돌고 있었기 때문에 MySQL 과 JVM 힙 경쟁
+해결: 종목당 1개의 수신 파이프라인만 유지하고, Redis Pub/Sub으로 모든 서버에 가격 데이터 브로드캐스팅
 
-결국 system.mem.available 급락하여 스왑/GC 폭증으로 이어짐
+결과: 한 서버 기준 동시 클라이언트 수 400 → 3000 수준으로 개선, 운영 기준은 1500 동시 접속
 
-**해결**
+### 2. Redis Pub/Sub Stampede
 
-1. DB를 RDS로 분리
-2. Webflux는 JVM Stack 을 적게 사용하므로 Stack 메모리 하향조정, Heap 상향조정
+문제: 실시간 데이터의 source 세션 종료 시 해당 종목을 수신받던 사용자들이 일제히 증권사 API 호출을 하는 Cache Stampede와 같은 현상 발생
 
-```
-JAVA_OPTS="
-  -Xms256m -Xmx512m
-  -XX:+HeapDumpOnOutOfMemoryError
-  -Dfile.encoding=UTF-8
-"
-```
+원인: 세션 복구 과정에서 동일 종목에 대한 동시성 제어 부재
 
-### 4-3. 애플리케이션 커넥션 풀 병목 해소를 통한 조회 성능 개선
+해결: Redis Lua 스크립트 기반 분산 락 적용으로 최초 1회만 실제 재구독 수행
 
-**문제**
+결과: stampede 방지, 주가가 최초로 Redis에 publish 되기 전의 중복 요청 방지
 
-K6으로 10,000 동시 접속하여 단순 SELECT 쿼리 부하 테스트에서 P95가 450ms 수준.
-R2DBC connection pool의 pending acquire 가 급증.
+### 3. 주문 이벤트 중복 처리 방지
 
-DB는 CloudWatch의 DatabaseConnections으로 모니터링 결과 max_connections 을 꽉채운 상태에서 CPU 사용률이 40% 대를 유지하는 것을 확인하고, 애플리케이션 커넥션 풀이 병목으로 작용하고 있음을 확인.
+문제: 손절·재매수 조건이 짧은 시간 안에 여러 번 감지되며 주문이 중복 실행됨
 
-**해결**
-- R2DBC 커넥션 풀을 10 -> 20으로 상향 조정
-- AWS ASG의 최대 서버 노드 개수를 8로 잡았기 때문에 그에 따라 MySQL max_connections 85 -> 170 으로 상향조정
+해결: PK 기반 멱등 키 생성 후, trade_status를 조건부 UPDATE하여 상태 변경이 성공한 경우에만 실제 주문 수행
 
-**결과**
-p95 450ms -> 150ms 로 75% 성능 향상
+결과: 중복 감지, 재시도, 장애 복구 상황에서도 중복 주문 방지
 
+### 4. 애플리케이션 커넥션 풀 병목 해소
+
+문제: K6 10,000 동시 접속 SELECT 테스트에서 p95 450ms, R2DBC pending acquire 급증
+
+원인 : max_connections 을 꽉채운 상태에서 CPU 사용률이 40% 대를 유지하는 것을 확인하고, 애플리케이션 커넥션 풀이 병목으로 작용하고 있음을 확인.
+
+해결: R2DBC pool 10 → 20, MySQL max_connections 85 → 170 조정
+
+결과: p95 450ms → 150ms로 개선
+---
