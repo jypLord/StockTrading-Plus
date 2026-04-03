@@ -38,10 +38,12 @@ public class JwtAuthenticationFilter implements WebFilter {
 
         // 토큰 유효하면 SecurityContext에 Authentication 세팅
         if (jwtProvider.validateToken(token)) {
+            Long userId = jwtProvider.getUserIdFromToken(token);
             String username = jwtProvider.getUsernameFromToken(token);
+            AuthenticatedUser principal = new AuthenticatedUser(userId, username);
 
             Authentication authentication =
-                new UsernamePasswordAuthenticationToken(username, token, Collections.emptyList());
+                new UsernamePasswordAuthenticationToken(principal, token, Collections.emptyList());
             return chain.filter(exchange)
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
         } else {

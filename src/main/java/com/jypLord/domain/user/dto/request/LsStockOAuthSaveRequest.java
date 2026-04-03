@@ -1,20 +1,23 @@
 package com.jypLord.domain.user.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jypLord.api.BrokerageFirm;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
+public class LsStockOAuthSaveRequest extends StockOAuthSaveRequest {
+    private final String appKey;
+    private final String appSecretKey;
 
-public class LsStockOAuthSaveRequest extends StockOAuthSaveRequest{
-    String appKey;
-    String appSecretKey;
-
-    public LsStockOAuthSaveRequest(BrokerageFirm firm, Long userId, String appKey,String appSecretKey){
-        super(firm, userId);
-        this.appKey=appKey;
-        this.appSecretKey=appSecretKey;
-
+    @JsonCreator
+    public LsStockOAuthSaveRequest(
+        @JsonProperty("firm") BrokerageFirm firm,
+        @JsonProperty("appKey") String appKey,
+        @JsonProperty("appSecretKey") String appSecretKey
+    ) {
+        super(firm);
+        this.appKey = appKey;
+        this.appSecretKey = appSecretKey;
     }
 }

@@ -59,11 +59,11 @@ public class AuthService {
             // 토큰 발급
             .flatMap(user -> {
 
-                String accessToken = jwtProvider.generateAccessToken(user.getEmail());
+                String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getEmail());
 
                 return redis.opsForValue().get("refresh:" + user.getEmail())
                     // Refresh 토큰 없으면 새로 발급
-                    .switchIfEmpty(Mono.defer(()-> Mono.just(jwtProvider.generateRefreshToken(user.getEmail()))))
+                    .switchIfEmpty(Mono.defer(() -> Mono.just(jwtProvider.generateRefreshToken(user.getId(), user.getEmail()))))
                     .map(refreshToken -> LoginResult.of(user, accessToken, refreshToken));
 
             })

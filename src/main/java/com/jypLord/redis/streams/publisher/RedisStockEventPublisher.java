@@ -43,7 +43,7 @@ public class RedisStockEventPublisher {
         String streamsKey = "event:losscut:server:" + serverId;
 
         Map<String, String> body = Map.of(
-            "idempotencyKey", tradeId.toString(),
+        "idempotencyKey", tradeId.toString(),
             "userId",  userId.toString(),
             "stockCode", stockCode,
             "broker", firm.toString(),

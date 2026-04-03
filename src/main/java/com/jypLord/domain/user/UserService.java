@@ -16,23 +16,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final BrokerClient brokerClient;
 
-    /*
-    증권사에서 OAuthToken 받아서 증권사 접근권한 취득, 그리고 DB에 저장.
-     */
-    public Mono<Void> getStockOAuthAndSave(StockOAuthSaveRequest dto){
-
-        return brokerClient.getOAuthToken(DTOMapper.toStockOAuthRequest(dto))
+    public Mono<Void> getStockOAuthAndSave(Long authenticatedUserId, StockOAuthSaveRequest dto) {
+        return brokerClient.getOAuthToken(DTOMapper.toStockOAuthRequest(authenticatedUserId, dto))
             .flatMap(oAuthToken ->
-                userRepository.findById(dto.getUserId())
-                    .flatMap(user-> {
+                userRepository.findById(authenticatedUserId)
+                    .flatMap(user -> {
                         user.setMarketAccessToken(oAuthToken);
-
                         return userRepository.save(user);
                     })
-                    .doOnSuccess(user-> log.debug("증권사 토큰 저장 성공, userId={}", user.getId()))
+                    .doOnSuccess(user -> log.debug("Broker token saved, userId={}", user.getId()))
                     .then()
             );
     }
-
-
 }

@@ -12,48 +12,56 @@ import reactor.core.publisher.Mono;
 
 public interface TradeRepository extends R2dbcRepository<Trade, Long> {
 
+    @Query("""
+        SELECT *
+        FROM trade
+        WHERE user_id = :userId
+          AND stock_code = :stockCode
+          AND trade_status = :status
+        LIMIT 1
+        """)
+    Mono<Trade> findByUserIdAndStockCodeAndStatus(
+        @Param("userId") Long userId,
+        @Param("stockCode") String stockCode,
+        @Param("status") TradeStatus status
+    );
 
     @Query("""
-    SELECT *
-    FROM trade t JOIN users u ON t.user_id = u.id
-    WHERE t.user_id = :userId AND t.stock_code = :stockCode AND t.trade_status = :status
-    """)
-    public Mono<Trade> findByUserIdAndStockCodeAndStatus(@Param("userId") Long userId, @Param("stockCode") String stockCode, @Param("status") TradeStatus status);
+        SELECT *
+        FROM trade
+        WHERE user_id = :userId
+          AND trade_status = :status
+        """)
+    Flux<Trade> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") TradeStatus status);
 
     @Query("""
-    SELECT *
-    FROM trade t JOIN users u ON t.userId = u.id
-    WHERE t.user_id = ?1 AND t.status = ?2
-    """)
-    public Flux<Trade> findByUserIdAndStatus(Long userId, TradeStatus status);
-
-    @Query("""
-    SELECT *
-    FROM trade
-    WHERE user_id = :userId AND trade_status = 'ACTIVE' AND firm = :firm
-    """)
-    public Flux<Trade> findValidTradeByUserId(@Param("userId") Long userId, @Param("firm")BrokerageFirm firm);
-
-    public Mono<Boolean> existsByUserIdAndStockCodeAndTradeStatus(Long id, String stockCode, TradeStatus status);
-
+        SELECT *
+        FROM trade
+        WHERE user_id = :userId
+          AND trade_status = 'ACTIVE'
+          AND firm = :firm
+        """)
+    Flux<Trade> findValidTradeByUserId(@Param("userId") Long userId, @Param("firm") BrokerageFirm firm);
 
     @Modifying
     @Query("""
-    UPDATE trade
-    SET trade_status = :newStatus
-    WHERE id = :tradeId
-      AND trade_status = :expectedStatus
-    """)
+        UPDATE trade
+        SET trade_status = :newStatus
+        WHERE id = :tradeId
+          AND trade_status = :expectedStatus
+        """)
     Mono<Boolean> updateTradeStatus(
         @Param("tradeId") Long tradeId,
         @Param("expectedStatus") TradeStatus expectedStatus,
-        @Param("newStatus") TradeStatus newStatus);
+        @Param("newStatus") TradeStatus newStatus
+    );
 
+    @Modifying
     @Query("""
         UPDATE trade
         SET trade_status = 'EXPIRED'
         WHERE trade_status = 'ACTIVE'
           AND created_at < NOW() - INTERVAL 1 DAY
         """)
-    public Mono<Integer> bulkDeactivateOldTrades();
+    Mono<Integer> bulkDeactivateOldTrades();
 }

@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,22 +37,24 @@ public class JwtProvider {
         this.parser = Jwts.parserBuilder().setSigningKey(secretKey).build();
     }
 
-    public String generateAccessToken(String username) {
+    public String generateAccessToken(Long userId, String email) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + ACCESS_TOKEN_VALIDITY);
         return Jwts.builder()
-            .setSubject(username)
+            .setSubject(email)
+            .addClaims(Map.of("userId", userId, "email", email))
             .setIssuedAt(now)
             .setExpiration(expiry)
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact();
     }
 
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(Long userId, String email) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + REFRESH_TOKEN_VALIDITY);
         return Jwts.builder()
-            .setSubject(username)
+            .setSubject(email)
+            .addClaims(Map.of("userId", userId, "email", email))
             .setIssuedAt(now)
             .setExpiration(expiry)
             .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -69,5 +72,16 @@ public class JwtProvider {
 
     public String getUsernameFromToken(String token) {
         return parser.parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Object value = parser.parseClaimsJws(token).getBody().get("userId");
+        if (value instanceof Integer integerValue) {
+            return integerValue.longValue();
+        }
+        if (value instanceof Long longValue) {
+            return longValue;
+        }
+        return Long.parseLong(String.valueOf(value));
     }
 }

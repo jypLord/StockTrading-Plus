@@ -9,36 +9,34 @@ import com.jypLord.domain.user.dto.request.StockOAuthSaveRequest;
 
 public class DTOMapper {
 
-    public static LsStockOAuthRequest toStockOAuthRequest(StockOAuthSaveRequest source) {
-
-        switch (source.getFirm()){
-            case LS :
+    public static LsStockOAuthRequest toStockOAuthRequest(Long userId, StockOAuthSaveRequest source) {
+        switch (source.getFirm()) {
+            case LS:
                 LsStockOAuthSaveRequest dto = (LsStockOAuthSaveRequest) source;
-
                 return new LsStockOAuthRequest(
-                    dto.getUserId(),
+                    userId,
                     dto.getFirm(),
                     dto.getAppKey(),
                     dto.getAppSecretKey()
                 );
-
             case KIWOOM:
+            default:
+                throw new IllegalArgumentException("Unsupported brokerage firm: " + source.getFirm());
         }
-        return null;
     }
 
     public static PriceRequest toPriceRequest(Long userId, BrokerageFirm firm, String accessToken, String stockCode) {
-        switch (firm){
-            case LS :
-
+        switch (firm) {
+            case LS:
                 return new LsPriceRequest(
                     userId,
                     firm,
                     accessToken,
                     stockCode
                 );
+            case KIWOOM:
+            default:
+                throw new IllegalArgumentException("Unsupported brokerage firm: " + firm);
         }
-        return null;
     }
 }
-
