@@ -31,14 +31,14 @@ class UserTest {
 
     @Test
     void get_accessToken_test() {
-        LsStockOAuthSaveRequest request = new LsStockOAuthSaveRequest(BrokerageFirm.LS, 1L, "appKey", "appSecret");
+        LsStockOAuthSaveRequest request = new LsStockOAuthSaveRequest(BrokerageFirm.LS, "appKey", "appSecret");
         User user = new User(1L, "test@test.com", "pw", "name", LocalDate.of(2000, 1, 1), null, null);
 
         given(brokerClient.getOAuthToken(any())).willReturn(Mono.just("access-token"));
         given(userRepository.findById(1L)).willReturn(Mono.just(user));
         given(userRepository.save(any(User.class))).willReturn(Mono.just(user));
 
-        StepVerifier.create(userService.getStockOAuthAndSave(request))
+        StepVerifier.create(userService.getStockOAuthAndSave(1L, request))
             .verifyComplete();
     }
 }

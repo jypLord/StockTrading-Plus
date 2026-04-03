@@ -93,7 +93,7 @@ class AuthServiceTest {
         given(redis.opsForValue()).willReturn(valueOperations);
         given(userRepository.findByEmail("user@test.com")).willReturn(Mono.just(user));
         given(passwordEncoder.matches("raw-password", "encoded")).willReturn(true);
-        given(jwtProvider.generateAccessToken("user@test.com")).willReturn("access-token");
+        given(jwtProvider.generateAccessToken(1L, "user@test.com")).willReturn("access-token");
         given(valueOperations.get("refresh:user@test.com")).willReturn(Mono.just("refresh-token"));
         given(valueOperations.set(eq("refresh:user@test.com"), eq("refresh-token"), any())).willReturn(Mono.just(true));
 
