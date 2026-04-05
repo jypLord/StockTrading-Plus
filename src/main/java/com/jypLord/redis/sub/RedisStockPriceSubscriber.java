@@ -21,8 +21,6 @@ public class RedisStockPriceSubscriber {
 
     private final ConcurrentHashMap<String, State> states = new ConcurrentHashMap<>();
 
-
-
     private static final class State {
         final Sinks.Many<StockPrice> sink =
             Sinks.many().multicast().directBestEffort();
@@ -40,7 +38,6 @@ public class RedisStockPriceSubscriber {
                 startRedisSubscription(stockCode, state);
             }
 
-
             return state.sink.asFlux()
                 .doFinally(sig -> release(stockCode));
         });
@@ -49,36 +46,41 @@ public class RedisStockPriceSubscriber {
     private void release(String stockCode) {
 
         State state = states.get(stockCode);
-        if (state == null) return;
+        if (state == null) {
+            return;
+        }
 
         int n = state.refCount.decrementAndGet();
-        if (n > 0) return;
+        if (n > 0) {
+            return;
+        }
 
-        // 0 이하로 내려가는 걸 방지
         if (n < 0) {
             state.refCount.compareAndSet(n, 0);
             return;
         }
 
         synchronized (state) {
-            if (state.refCount.get() != 0) return;
+            if (state.refCount.get() != 0) {
+                return;
+            }
 
             if (state.redisSub != null) {
-                state.redisSub.dispose(); // Redis 구독 해제
+                state.redisSub.dispose();
                 state.redisSub = null;
             }
 
-            // sink 종료 + 상태 제거
             state.sink.tryEmitComplete();
             states.remove(stockCode, state);
         }
     }
 
     private void startRedisSubscription(String stockCode, State state) {
-        // 동시에 여러 구독자가 붙어도 redisSub가 중복으로 열리지 않게 보호
         synchronized (state) {
 
-            if (state.redisSub != null && !state.redisSub.isDisposed()) return;
+            if (state.redisSub != null && !state.redisSub.isDisposed()) {
+                return;
+            }
 
             String channel = "stock:price:" + stockCode;
 
@@ -98,6 +100,7 @@ public class RedisStockPriceSubscriber {
                 });
         }
     }
+
     public int activeBroadcastCount() {
         return states.size();
     }
@@ -110,6 +113,4 @@ public class RedisStockPriceSubscriber {
 
         return new StockPrice(stockCode, price);
     }
-
 }
-

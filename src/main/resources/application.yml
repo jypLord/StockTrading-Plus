@@ -58,3 +58,11 @@ jwt:
   secret:
     key: ${JWT_SECRET_KEY}
 
+management:
+  metrics:
+    export:
+      cloudwatch:
+        enabled: ${CLOUDWATCH_METRICS_ENABLED:true}
+        namespace: ${CLOUDWATCH_NAMESPACE:autoInvest}
+        step: ${CLOUDWATCH_STEP:1m}
+

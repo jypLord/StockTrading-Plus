@@ -1,9 +1,9 @@
 package com.jypLord.domain.trade.service;
 
 import com.jypLord.api.BrokerageFirm;
-import com.jypLord.api.dto.response.AssetPrice;
 import com.jypLord.api.dto.request.buy.request.BuyRequest;
 import com.jypLord.api.dto.request.sell.SellRequest;
+import com.jypLord.api.dto.response.AssetPrice;
 import com.jypLord.api.handler.BrokerClient;
 import com.jypLord.domain.trade.TradeStatus;
 import com.jypLord.domain.trade.dto.request.RegisterTradeInfoRequest;
@@ -47,7 +47,7 @@ public class TradeService {
         return tradeRepository.findByUserIdAndStockCodeAndStatus(userId, dto.stockCode(), TradeStatus.ACTIVE)
             .flatMap(trade -> {
                 if (trade.getUserSetPrice() == dto.price()) {
-                    return Mono.error(new AlreadyBoundException("이미 추가한 종목:" + dto.stockCode()));
+                    return Mono.error(new AlreadyBoundException("이미 등록된 종목:" + dto.stockCode()));
                 }
                 return Mono.error(new AlreadyBoundException());
             })
@@ -63,17 +63,12 @@ public class TradeService {
         Mono<User> userCached = userRepository.findById(userId).cache();
 
         return tradeRepository.findValidTradeByUserId(userId, firm)
-            .switchIfEmpty(Mono.error(new NoValidTradeException("저장된 종목이 없음")))
+            .switchIfEmpty(Mono.error(new NoValidTradeException("유효한 종목 데이터가 없음")))
             .take(10)
-            .doOnNext(trade ->
-                userSubscribeStockMap
-                    .computeIfAbsent(userId, key -> ConcurrentHashMap.newKeySet())
-                    .add(trade.getStockCode())
-            )
             .filterWhen(trade -> redisPricePublisher.acquireLockIfAbsent(trade.getStockCode(), userId))
             .flatMap(trade ->
                 userCached.flatMapMany(user ->
-                        brokerClient.receivePrice(
+                    brokerClient.receivePrice(
                             DTOMapper.toPriceRequest(userId, firm, user.getMarketAccessToken(), trade.getStockCode())
                         )
                         .flatMap(asset ->
@@ -94,13 +89,9 @@ public class TradeService {
         Mono<User> userCached = userRepository.findById(userId).cache();
 
         return tradeRepository.findValidTradeByUserId(userId, firm)
-            .switchIfEmpty(Mono.error(new NoValidTradeException("저장된 종목이 없음")))
+            .switchIfEmpty(Mono.error(new NoValidTradeException("저장된 종목데이터가 없음")))
             .take(10)
-            .doOnNext(trade ->
-                userSubscribeStockMap
-                    .computeIfAbsent(userId, key -> ConcurrentHashMap.newKeySet())
-                    .add(trade.getStockCode())
-            )
+            .doOnNext(trade -> registerMonitoring(userId, trade.getStockCode()))
             .flatMap(trade ->
                 userCached.flatMapMany(user ->
                     losscutMonitoring(
@@ -133,7 +124,12 @@ public class TradeService {
                 brokerClient.sell(new SellRequest(firm, stockCode, userSetPrice, quantity, marketAccessToken))
                     .and(redisStockEventPublisher.publishLosscutEvent(userId, tradeId, stockCode, firm, userSetPrice, quantity))
             )
+            .doFinally(signalType -> unregisterMonitoring(userId, stockCode))
             .then();
+    }
+
+    public int currentMonitoringUserCount() {
+        return userSubscribeStockMap.size();
     }
 
     public Mono<Boolean> updateTradeStatusForIdempotency(Long tradeId, TradeStatus expectedStatus, TradeStatus newStatus) {
@@ -167,5 +163,18 @@ public class TradeService {
                     )
             )
             .then();
+    }
+
+    private void registerMonitoring(Long userId, String stockCode) {
+        userSubscribeStockMap
+            .computeIfAbsent(userId, key -> ConcurrentHashMap.newKeySet())
+            .add(stockCode);
+    }
+
+    private void unregisterMonitoring(Long userId, String stockCode) {
+        userSubscribeStockMap.computeIfPresent(userId, (key, stockCodes) -> {
+            stockCodes.remove(stockCode);
+            return stockCodes.isEmpty() ? null : stockCodes;
+        });
     }
 }
