@@ -1,12 +1,12 @@
-# autoInvest
+# StockTrading- Plus
 
-> 실시간 시세 감시 기반 자동 손절/재매수 백엔드 API  
-> WebFlux, Redis, R2DBC를 활용해 적은 자원으로 많은 동시 연결을 처리하는 구조를 설계했습니다.
+> 증권사에서 제공하지 않는 기능을 추가한 미니 증권사 프로젝트입니다.
+
 
 ## 프로젝트 소개
 
-autoInvest는 사용자가 설정한 손절가를 기준으로 실시간 시세를 감시하고,  
-조건 도달 시 자동 손절한 뒤 이후 다시 조건에 맞으면 재매수까지 처리하는 주식 관리 API입니다.
+사용자가 설정한 기준가를 토대로 실시간 시세를 감시하고,  
+조건 도달 시 자동 손절하고, 다시 기준가까지 주가가 회복하면 재매수하는 주식 관리 API입니다.
 
 **실시간 데이터 수신**, **중복 처리 방지**, **서버 간 데이터 공유**, **비동기 후처리 안정성**까지 고려해 설계한 프로젝트입니다.
 실시간 연결이 많은 환경에서 발생하는 **세션 폭증, 메모리 부족, 중복 처리, 커넥션 풀 병목** 문제를 해결하는 과정까지 담았습니다.
@@ -35,8 +35,8 @@ autoInvest는 사용자가 설정한 손절가를 기준으로 실시간 시세�
 - Language: Java 17
 - Framework: Spring Boot, Spring WebFlux, Spring Security
 - Database: MySQL, R2DBC
-- Cache / Messaging: Redis Pub/Sub, Redis Streams
-- Infra: AWS EC2, RDS, Docker, GitHub Actions
+- Cache / Messaging: Redis Pub/Sub, Apache Kafka
+- Infra: AWS EC2, RDS, Elastic Cache(Redis), MSK ,Docker,GitHub Actions
 - Monitoring: AWS CloudWatch, 메트릭 기반 성능 분석
 
 ---
