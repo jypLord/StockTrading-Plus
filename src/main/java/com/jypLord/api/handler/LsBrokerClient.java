@@ -10,17 +10,19 @@ import io.netty.handler.logging.LogLevel;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import com.jypLord.api.BrokerageFirm;
-import com.jypLord.api.dto.request.getPrice.PriceRequest;
-import com.jypLord.api.dto.response.AssetPrice;
+import com.jypLord.api.dto.broker.request.price.PriceRequest;
+import com.jypLord.domain.trade.dto.response.AssetPrice;
 import com.jypLord.exception.broker.FailRetrievingStockInfoException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.jypLord.api.dto.request.buy.response.BuyResponse;
-import com.jypLord.api.dto.request.buy.request.BuyRequest;
-import com.jypLord.api.dto.request.sell.SellRequest;
-import com.jypLord.api.dto.request.sell.response.SellResponse;
-import com.jypLord.api.dto.request.stockOAuth.LsStockOAuthRequest;
-import com.jypLord.api.dto.request.stockOAuth.StockOAuthRequest;
+import com.jypLord.api.dto.broker.response.BuyResponse;
+import com.jypLord.api.dto.broker.request.buy.BuyRequest;
+import com.jypLord.api.dto.broker.request.sell.SellRequest;
+import com.jypLord.api.dto.broker.response.SellResponse;
+import com.jypLord.api.dto.broker.request.stockOAuth.LsStockOAuthRequest;
+import com.jypLord.api.dto.broker.request.stockOAuth.StockOAuthRequest;
+import com.jypLord.api.dto.broker.request.tradeInfo.TradeInfoRequest;
 import com.jypLord.exception.broker.StockOAuthException;
+import com.jypLord.api.dto.broker.response.TradeInfoResponse;
 import com.jypLord.util.JsonUtil;
 import java.net.URI;
 import java.time.Duration;
@@ -324,4 +326,11 @@ public class LsBrokerClient implements BrokerClient{
             .retrieve()
             .bodyToMono(BuyResponse.class);
     }
+
+    @Override
+    public Mono<TradeInfoResponse> getTradeInfo(TradeInfoRequest dto) {
+        return null;
+    }
+
+
 }

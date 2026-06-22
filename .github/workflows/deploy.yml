@@ -7,6 +7,13 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  DEPLOY_DIRECTORY: ${{ vars.DEPLOY_DIRECTORY || '/home/ubuntu/autoInvest' }}
+  SSM_TARGET_TAG_KEY: ${{ vars.SSM_TARGET_TAG_KEY }}
+  SSM_TARGET_TAG_VALUE: ${{ vars.SSM_TARGET_TAG_VALUE }}
 
 jobs:
   deploy:
@@ -24,8 +31,6 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - run: ./gradlew clean bootJar -x tes
-      
       - run: ./gradlew clean bootJar -x test
 
       - uses: docker/setup-buildx-action@v3
@@ -46,15 +51,75 @@ jobs:
             ghcr.io/jyplord/autoinvest:latest
             ghcr.io/jyplord/autoinvest:${{ github.sha }}
 
-      - name: Deploy on EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            set -e
-            cd /home/ubuntu/autoInvest
-            docker compose pull app
-            docker compose up -d app
-            docker image prune -f
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+
+      - name: Deploy to private app instances through SSM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > ssm-commands.json <<EOF
+          {
+            "commands": [
+              "set -e",
+              "cd ${DEPLOY_DIRECTORY}",
+              "docker compose pull app",
+              "docker compose up -d app",
+              "docker image prune -f"
+            ]
+          }
+          EOF
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=tag:${SSM_TARGET_TAG_KEY},Values=${SSM_TARGET_TAG_VALUE}" \
+            --parameters file://ssm-commands.json \
+            --comment "Deploy ${GITHUB_SHA} from GitHub Actions" \
+            --max-concurrency "1" \
+            --max-errors "0" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM command id: ${COMMAND_ID}"
+
+          for attempt in {1..60}; do
+            STATUSES=$(aws ssm list-command-invocations \
+              --command-id "${COMMAND_ID}" \
+              --query "CommandInvocations[].Status" \
+              --output text)
+
+            if [ -z "${STATUSES}" ]; then
+              sleep 5
+              continue
+            fi
+
+            if echo "${STATUSES}" | grep -Eq 'Pending|InProgress|Delayed|Cancelling'; then
+              sleep 10
+              continue
+            fi
+
+            if echo "${STATUSES}" | grep -Evq '^Success([[:space:]]+Success)*$'; then
+              aws ssm list-command-invocations \
+                --command-id "${COMMAND_ID}" \
+                --details \
+                --output table
+              exit 1
+            fi
+
+            aws ssm list-command-invocations \
+              --command-id "${COMMAND_ID}" \
+              --details \
+              --output table
+            exit 0
+          done
+
+          echo "Timed out waiting for SSM deployment to finish"
+          aws ssm list-command-invocations \
+            --command-id "${COMMAND_ID}" \
+            --details \
+            --output table
+          exit 1

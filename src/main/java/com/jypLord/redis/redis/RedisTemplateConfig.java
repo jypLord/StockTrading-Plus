@@ -1,8 +1,8 @@
-package com.jypLord.config.redis;
+package com.jypLord.redis.redis;
 
 
 
-import com.jypLord.api.dto.response.AssetPrice;
+import com.jypLord.domain.trade.dto.response.AssetPrice;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -16,6 +16,22 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisTemplateConfig {
+
+    @Bean
+    public ReactiveRedisTemplate<String, String> stringReactiveRedisTemplate(
+        ReactiveRedisConnectionFactory factory
+    ) {
+        StringRedisSerializer serializer = new StringRedisSerializer();
+
+        RedisSerializationContext<String, String> context =
+            RedisSerializationContext.<String, String>newSerializationContext(serializer)
+                .value(serializer)
+                .hashKey(serializer)
+                .hashValue(serializer)
+                .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
 
     @Bean(name = "AssetPrice")
     public ReactiveRedisTemplate<String, AssetPrice> assetPriceRedisTemplate(

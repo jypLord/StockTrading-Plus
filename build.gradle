@@ -63,7 +63,8 @@ dependencies {
     //Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
-
+    //Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
     //Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

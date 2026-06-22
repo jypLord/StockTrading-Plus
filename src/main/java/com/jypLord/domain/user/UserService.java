@@ -22,10 +22,16 @@ public class UserService {
                 userRepository.findById(authenticatedUserId)
                     .flatMap(user -> {
                         user.setMarketAccessToken(oAuthToken);
-                        return userRepository.save(user);
+                        return userRepository.save(user)
+                            .doOnSuccess(savedUser -> log.debug("Broker token saved, userId={}", savedUser.getId()));
                     })
-                    .doOnSuccess(user -> log.debug("Broker token saved, userId={}", user.getId()))
                     .then()
             );
     }
+
+    public Mono<User> findUser(Long userId) {
+        return userRepository.findById(userId)
+            .switchIfEmpty(Mono.error(new IllegalStateException("User not found: " + userId)));
+    }
+
 }

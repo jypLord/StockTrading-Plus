@@ -17,7 +17,18 @@ CREATE TABLE trade(
                       user_set_price INT NOT NULL,
                       quantity INT NOT NULL,
                       executed_price INT ,
-                      trade_status ENUM('ACTIVE','CANCELED', 'EXPIRED', 'EXECUTED_BUY','EXECUTED_LOSSCUT') NOT NULL,
+                      trade_status ENUM(
+                          'ACTIVE',
+                          'LOSSCUT_TRIGGERED',
+                          'LOSSCUT_ORDER_SUBMITTED',
+                          'EXECUTED_LOSSCUT',
+                          'REBUY_WATCHING',
+                          'REBUY_ORDER_SUBMITTED',
+                          'EXECUTED_BUY',
+                          'ORDER_FAILED',
+                          'CANCELLED',
+                          'EXPIRED'
+                      ) NOT NULL,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       user_id BIGINT,
                       FOREIGN KEY (user_id) REFERENCES users(id)

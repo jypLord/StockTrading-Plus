@@ -1,9 +1,9 @@
 package com.jypLord.util;
 
 import com.jypLord.api.BrokerageFirm;
-import com.jypLord.api.dto.request.getPrice.LsPriceRequest;
-import com.jypLord.api.dto.request.getPrice.PriceRequest;
-import com.jypLord.api.dto.request.stockOAuth.LsStockOAuthRequest;
+import com.jypLord.api.dto.broker.request.price.LsPriceRequest;
+import com.jypLord.api.dto.broker.request.price.PriceRequest;
+import com.jypLord.api.dto.broker.request.stockOAuth.LsStockOAuthRequest;
 import com.jypLord.domain.user.dto.request.LsStockOAuthSaveRequest;
 import com.jypLord.domain.user.dto.request.StockOAuthSaveRequest;
 

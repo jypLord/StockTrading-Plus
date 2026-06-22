@@ -1,6 +1,6 @@
 package com.jypLord.redis.pub;
 
-import com.jypLord.api.dto.response.AssetPrice;
+import com.jypLord.domain.trade.dto.response.AssetPrice;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

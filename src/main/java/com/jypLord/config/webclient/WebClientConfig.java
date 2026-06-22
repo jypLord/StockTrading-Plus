@@ -1,6 +1,5 @@
 package com.jypLord.config.webclient;
 
-import com.jypLord.api.dto.request.buy.response.BuyResponse;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;

@@ -2,8 +2,8 @@ package com.jypLord.domain.trade.controller;
 
 import com.jypLord.auth.jwt.AuthenticatedUser;
 import com.jypLord.api.BrokerageFirm;
-import com.jypLord.api.dto.response.AssetPrice;
 import com.jypLord.domain.trade.dto.request.RegisterTradeInfoRequest;
+import com.jypLord.domain.trade.dto.response.AssetPrice;
 import com.jypLord.domain.trade.service.TradeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

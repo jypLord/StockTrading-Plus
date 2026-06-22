@@ -30,9 +30,37 @@ public interface TradeRepository extends R2dbcRepository<Trade, Long> {
         SELECT *
         FROM trade
         WHERE user_id = :userId
+          AND stock_code = :stockCode
+          AND trade_status IN (
+              'ACTIVE',
+              'LOSSCUT_TRIGGERED',
+              'LOSSCUT_ORDER_SUBMITTED',
+              'EXECUTED_LOSSCUT',
+              'REBUY_WATCHING',
+              'REBUY_ORDER_SUBMITTED',
+              'EXECUTED_BUY'
+          )
+        LIMIT 1
+        """)
+    Mono<Trade> findMonitorableTradeByUserIdAndStockCode(
+        @Param("userId") Long userId,
+        @Param("stockCode") String stockCode
+    );
+
+    @Query("""
+        SELECT *
+        FROM trade
+        WHERE user_id = :userId
           AND trade_status = :status
         """)
     Flux<Trade> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") TradeStatus status);
+
+    @Query("""
+        SELECT *
+        FROM trade
+        WHERE trade_status = :status
+        """)
+    Flux<Trade> findByStatus(@Param("status") TradeStatus status);
 
     @Query("""
         SELECT *

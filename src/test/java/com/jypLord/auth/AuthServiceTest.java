@@ -9,20 +9,21 @@ import static org.mockito.Mockito.verify;
 
 import com.jypLord.auth.dto.request.LoginRequest;
 import com.jypLord.auth.dto.request.SignUpRequest;
+import com.jypLord.auth.jwt.JwtProvider;
 import com.jypLord.domain.user.User;
 import com.jypLord.domain.user.UserRepository;
 import com.jypLord.exception.user.DuplicateSignUpException;
 import com.jypLord.exception.user.FailedSaveRefreshTokenException;
 import com.jypLord.exception.user.InvalidPasswordException;
 import com.jypLord.exception.user.NoUserLoginException;
+import com.jypLord.redis.RedisWrapper;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -33,13 +34,11 @@ class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private com.jypLord.auth.jwt.JwtProvider jwtProvider;
+    private JwtProvider jwtProvider;
     @Mock
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     @Mock
-    private ReactiveRedisTemplate<String, String> redis;
-    @Mock
-    private ReactiveValueOperations<String, String> valueOperations;
+    private RedisWrapper redisWrapper;
 
     @InjectMocks
     private AuthService authService;
@@ -90,12 +89,11 @@ class AuthServiceTest {
 
         User user = new User(1L, "user@test.com", "encoded", "tester", LocalDate.of(2000, 1, 1), null, "market-token");
 
-        given(redis.opsForValue()).willReturn(valueOperations);
         given(userRepository.findByEmail("user@test.com")).willReturn(Mono.just(user));
         given(passwordEncoder.matches("raw-password", "encoded")).willReturn(true);
         given(jwtProvider.generateAccessToken(1L, "user@test.com")).willReturn("access-token");
-        given(valueOperations.get("refresh:user@test.com")).willReturn(Mono.just("refresh-token"));
-        given(valueOperations.set(eq("refresh:user@test.com"), eq("refresh-token"), any())).willReturn(Mono.just(true));
+        given(redisWrapper.getRefreshToken("user@test.com")).willReturn(Mono.just("refresh-token"));
+        given(redisWrapper.saveRefreshToken(eq("user@test.com"), eq("refresh-token"), any())).willReturn(Mono.just(true));
 
         StepVerifier.create(authService.login(request))
             .assertNext(result -> {
@@ -143,8 +141,7 @@ class AuthServiceTest {
 
     @Test
     void saveRefreshTokenToRedis_redisReturnsFalse_throwsFailedSaveException() {
-        given(redis.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.set(eq("refresh:user@test.com"), eq("token"), any())).willReturn(Mono.just(false));
+        given(redisWrapper.saveRefreshToken(eq("user@test.com"), eq("token"), any())).willReturn(Mono.just(false));
 
         StepVerifier.create(authService.saveRefreshTokenToRedis("token", "user@test.com"))
             .expectError(FailedSaveRefreshTokenException.class)
