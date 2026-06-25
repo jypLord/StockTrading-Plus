@@ -188,7 +188,7 @@ Mysql의 max_connections은 꽉 채운 상태이나 CPU 사용률이 40% 대를 
 
 Batch Bulk Insert 채택.
 
-동시 10000 Insert 테스트에서 에러율 0% 기록하였고 p99 20ms 수준.
+동시 10000 Insert 테스트에서 에러율 0% 기록하였음.
 
 
 
