@@ -1,6 +1,10 @@
 package com.jypLord.api;
 
 public enum BrokerageFirm {
-    LS, KIWOOM;
+    // 주식
+    LS, KIWOOM,
+
+    // 코인
+    BINANCE;
 }
 

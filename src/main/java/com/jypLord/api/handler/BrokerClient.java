@@ -11,11 +11,17 @@ import com.jypLord.api.dto.broker.response.TradeInfoResponse;
 import com.jypLord.domain.trade.dto.response.AssetPrice;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface BrokerClient {
-    public Flux<AssetPrice> receivePrice(PriceRequest dto);
-    public Mono<String> getOAuthToken(StockOAuthRequest dto);
-    public Mono<SellResponse> sell(SellRequest dto);
-    public Mono<BuyResponse> buy(BuyRequest dto);
-    public Mono<TradeInfoResponse> getTradeInfo(TradeInfoRequest dto);
+
+    ConcurrentHashMap<Long, Sinks.Many<String>> webSocketSinks = new ConcurrentHashMap<>();
+
+    Flux<AssetPrice> receivePrice(PriceRequest dto);
+    Mono<String> getOAuthToken(StockOAuthRequest dto);
+    Mono<SellResponse> sell(SellRequest dto);
+    Mono<BuyResponse> buy(BuyRequest dto);
+    Mono<TradeInfoResponse> getTradeInfo(TradeInfoRequest dto);
 }

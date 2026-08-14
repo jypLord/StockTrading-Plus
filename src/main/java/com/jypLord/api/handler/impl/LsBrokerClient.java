@@ -1,8 +1,10 @@
-package com.jypLord.api.handler;
+package com.jypLord.api.handler.impl;
 
+import com.jypLord.api.handler.BrokerApiClient;
+import com.jypLord.api.handler.BrokerClient;
 import com.jypLord.exception.broker.KoreanMarketOverTimeException;
 import java.time.LocalTime;
-import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import reactor.core.Disposable;
 import reactor.netty.http.client.HttpClient;
@@ -47,11 +49,9 @@ import reactor.core.publisher.Sinks;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class LsBrokerClient implements BrokerClient{
+public class LsBrokerClient implements BrokerApiClient {
 
     private final WebClient.Builder client;
-
-    private final ConcurrentHashMap<Long, Sinks.Many<String>> webSocketSinks = new ConcurrentHashMap<>();
 
     @Override
     public Flux<AssetPrice> receivePrice(PriceRequest dto) {
@@ -332,5 +332,8 @@ public class LsBrokerClient implements BrokerClient{
         return null;
     }
 
-
+    @Override
+    public BrokerageFirm getFirm() {
+        return BrokerageFirm.LS;
+    }
 }
